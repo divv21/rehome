@@ -78,7 +78,7 @@ export default function AdminDashboard() {
   // Initial fetch + 5s poll
   useEffect(() => {
     fetchReturns()
-    const interval = setInterval(fetchReturns, 5000)
+    const interval = setInterval(fetchReturns, 30000)
     return () => clearInterval(interval)
   }, [fetchReturns])
 
