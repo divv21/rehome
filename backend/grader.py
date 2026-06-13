@@ -55,9 +55,10 @@ Analyze the product images carefully and respond with ONLY a JSON object, no oth
         return json.loads(text)
 
     except Exception as e:
+        print(f'GRADING ERROR: {str(e)}')
         return {
             'condition_tier': 'Good',
             'confidence': 85,
-            'damage_notes': 'AI grading unavailable, manual review recommended.',
+            'damage_notes': f'Grading error: {str(e)}',
             'suggested_resale_price': 1000,
         }
