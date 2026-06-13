@@ -21,18 +21,6 @@ def grade_product(image_paths: list[str], return_reason: str, product_name: str)
 
         client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
-        parts = []
-        for path in image_paths:
-            if os.path.exists(path) and 'placeholder' not in path:
-                with open(path, 'rb') as f:
-                    image_data = base64.b64encode(f.read()).decode()
-                parts.append(
-                    types.Part.from_bytes(
-                        data=base64.b64decode(image_data),
-                        mime_type='image/jpeg',
-                    )
-                )
-
         prompt = f'''You are a product condition grading assistant for Amazon Rehome, Amazon's intelligent returns resale platform.
 
 Product: {product_name}
@@ -46,11 +34,34 @@ Analyze the product images carefully and respond with ONLY a JSON object, no oth
   "suggested_resale_price": integer in INR based on condition
 }}'''
 
-        parts.append(prompt)
+        contents = []
+
+        image_added = False
+        for path in image_paths:
+            full_path = path if os.path.exists(path) else f'uploads/{os.path.basename(path)}'
+            print(f'Checking image path: {full_path}, exists: {os.path.exists(full_path)}')
+            if os.path.exists(full_path) and 'placeholder' not in full_path:
+                with open(full_path, 'rb') as f:
+                    raw_bytes = f.read()
+                contents.append(
+                    types.Part.from_bytes(
+                        data=raw_bytes,
+                        mime_type='image/jpeg',
+                    )
+                )
+                image_added = True
+
+        contents.append(types.Part.from_text(text=prompt))
+
+        print(f'Sending to Gemini: {len(contents)} parts, image_added: {image_added}')
+
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=parts,
+            model='gemini-2.0-flash',
+            contents=contents,
         )
+
+        print(f'Gemini raw response: {response.text}')
+
         text = re.sub(r'```json|```', '', response.text).strip()
         return json.loads(text)
 
