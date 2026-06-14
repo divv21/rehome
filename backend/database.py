@@ -16,6 +16,7 @@ def init_db():
             order_id TEXT,
             product_name TEXT,
             return_reason TEXT,
+            category TEXT,
             customer_condition TEXT,
             notes TEXT,
             image_paths TEXT,

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -13,10 +13,15 @@ const inputClass =
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
 export default function SubmitReturn() {
+  const [searchParams] = useSearchParams()
+  const prefilled = searchParams.get('product_name')
+
   const [form, setForm] = useState({
-    product_name: '',
+    product_name: searchParams.get('product_name') || '',
     return_reason: '',
     customer_condition: '',
+    category: searchParams.get('category') || '',
+    original_mrp: searchParams.get('mrp') || '',
     notes: '',
   })
   const [images, setImages] = useState([])      // File objects
@@ -53,6 +58,7 @@ export default function SubmitReturn() {
     data.append('product_name', form.product_name)
     data.append('return_reason', form.return_reason)
     data.append('customer_condition', form.customer_condition)
+    data.append('category', form.category || 'Other')
     data.append('notes', form.notes)
     images.forEach(img => data.append('images', img))
 
@@ -79,6 +85,16 @@ export default function SubmitReturn() {
         <h1 className="text-2xl font-bold text-navy-900 mb-6" style={{ color: '#0f172a' }}>
           Submit a Return
         </h1>
+
+        {/* Prefilled from barcode banner */}
+        {prefilled && !success && (
+          <div className="mb-6 rounded-md bg-green-50 border border-green-300 px-4 py-3">
+            <p className="text-green-800 font-medium text-sm">
+              ✓ Product details auto-filled from barcode scan
+            </p>
+            <p className="text-green-600 text-xs mt-0.5">You can edit these if needed.</p>
+          </div>
+        )}
 
         {/* Success banner */}
         {success && (

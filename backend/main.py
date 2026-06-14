@@ -31,6 +31,7 @@ async def submit_return(
     product_name: str = Form(...),
     return_reason: str = Form(...),
     customer_condition: str = Form(...),
+    category: str = Form('Other'),
     notes: str = Form(''),
     images: list[UploadFile] = File([]),
 ):
@@ -50,11 +51,11 @@ async def submit_return(
     cursor = conn.execute(
         '''
         INSERT INTO returns
-            (order_id, product_name, return_reason, customer_condition, notes, image_paths, status)
+            (order_id, product_name, return_reason, category, customer_condition, notes, image_paths, status)
         VALUES
-            (?, ?, ?, ?, ?, ?, 'pending_grading')
+            (?, ?, ?, ?, ?, ?, ?, 'pending_grading')
         ''',
-        (order_id, product_name, return_reason, customer_condition, notes, image_paths),
+        (order_id, product_name, return_reason, category, customer_condition, notes, image_paths),
     )
     conn.commit()
     return_id = cursor.lastrowid
@@ -93,30 +94,37 @@ def grade_return(id: int):
     image_paths = [f'uploads/{p}' for p in record['image_paths'].split(',')]
 
     grade = grade_product(image_paths, record['return_reason'], record['product_name'])
-    route = decide_route(grade['condition_tier'], grade['confidence'], grade['suggested_resale_price'])
+    route = decide_route(
+        grade['condition_tier'],
+        grade['confidence'],
+        grade['suggested_resale_price'],
+        grade.get('refurbishment_needed', False),
+        grade.get('functional_testing_required', False),
+        grade.get('functional_testing_notes'),
+        record['category']
+    )
 
-    conn.execute(
-        '''
-        UPDATE returns
-        SET ai_condition_tier = ?,
+    conn.execute('''
+        UPDATE returns SET
+            ai_condition_tier = ?,
             ai_confidence = ?,
             ai_damage_notes = ?,
             suggested_resale_price = ?,
             routing_decision = ?,
             routing_reason = ?,
+            refurbishment_notes = ?,
             status = 'graded'
         WHERE id = ?
-        ''',
-        (
-            grade['condition_tier'],
-            grade['confidence'],
-            grade['damage_notes'],
-            grade['suggested_resale_price'],
-            route['routing_decision'],
-            route['routing_reason'],
-            id,
-        ),
-    )
+    ''', (
+        grade['condition_tier'],
+        grade['confidence'],
+        grade['damage_notes'],
+        grade['suggested_resale_price'],
+        route['routing_decision'],
+        route['routing_reason'],
+        grade.get('refurbishment_notes') or grade.get('functional_testing_notes'),
+        id
+    ))
     conn.commit()
     conn.close()
 
@@ -146,18 +154,64 @@ def get_health_card(id: int):
     resale_price = record['suggested_resale_price'] or 0
     price_deduction = round(((original_mrp - resale_price) / original_mrp) * 100) if resale_price else 0
 
-    leaf_map = {
+    star_map = {
         'Like New': 5,
         'Good': 4,
         'Acceptable': 3,
         'Liquidate': 1,
     }
-    leaf_rating = leaf_map.get(record['ai_condition_tier'], 0)
+    star_rating = star_map.get(record['ai_condition_tier'], 0)
 
     return {
         **record,
         'price_deduction_percentage': price_deduction,
-        'leaf_rating': leaf_rating,
+        'star_rating': star_rating,
+        'lifecycle': [
+            {'event': 'Original Sale',          'date': 'March 2026'},
+            {'event': 'Returned to Warehouse',  'date': 'June 2026'},
+            {'event': 'AI Graded',              'date': 'June 2026'},
+            {'event': 'Listed on Amazon Rehome','date': 'June 2026'},
+        ],
+    }
+
+
+@app.get('/api/health/customer/{id}')
+def get_customer_health_card(id: int):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM returns WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    if not row:
+        return {'error': 'Not found'}
+
+    record = dict(row)
+
+    # Customer cannot see liquidated products
+    if record.get('routing_decision') and 'liquidat' in record['routing_decision'].lower():
+        return {'error': 'This product is not available for viewing'}
+
+    if record.get('ai_condition_tier') == 'Liquidate':
+        return {'error': 'This product is not available for viewing'}
+
+    original_mrp = record['original_mrp'] or 2000
+    resale_price = record['suggested_resale_price'] or 0
+    price_deduction = round(((original_mrp - resale_price) / original_mrp) * 100) if resale_price else 0
+
+    star_map = {
+        'Like New': 5,
+        'Good': 4,
+        'Acceptable': 3,
+    }
+    star_rating = star_map.get(record['ai_condition_tier'], 0)
+
+    # Remove sensitive warehouse fields
+    safe_record = {k: v for k, v in record.items() if k not in [
+        'routing_reason', 'refurbishment_notes',
+    ]}
+
+    return {
+        **safe_record,
+        'price_deduction_percentage': price_deduction,
+        'star_rating': star_rating,
         'lifecycle': [
             {'event': 'Original Sale',          'date': 'March 2026'},
             {'event': 'Returned to Warehouse',  'date': 'June 2026'},
@@ -174,6 +228,64 @@ def approve_listing(id: int):
     conn.commit()
     conn.close()
     return {'status': 'listed'}
+
+
+@app.post('/api/update-condition/{id}')
+def update_condition(id: int, condition: str = Form(...), notes: str = Form('')):
+    conn = get_db()
+    conn.execute(
+        '''
+        UPDATE returns
+        SET ai_condition_tier = ?,
+            ai_damage_notes = ?,
+            status = 'graded',
+            routing_decision = 'Resell on Amazon Rehome',
+            routing_reason = 'Manually verified via functional testing'
+        WHERE id = ?
+        ''',
+        (condition, notes, id),
+    )
+    conn.commit()
+    conn.close()
+    return {'status': 'graded', 'condition': condition, 'notes': notes}
+
+@app.post('/api/update-condition/{id}')
+def update_condition_after_testing(id: int, payload: dict):
+    new_condition = payload.get('condition_tier')
+    testing_notes = payload.get('testing_notes')
+    
+    conn = get_db()
+    record = dict(conn.execute('SELECT * FROM returns WHERE id = ?', (id,)).fetchone())
+    
+    from router import decide_route
+    route = decide_route(
+        new_condition,
+        95,
+        record['suggested_resale_price'] or 1000,
+        new_condition == 'Acceptable',
+        False,
+        None,
+        record['category']
+    )
+    
+    conn.execute('''
+        UPDATE returns SET
+            ai_condition_tier = ?,
+            routing_decision = ?,
+            routing_reason = ?,
+            refurbishment_notes = ?,
+            status = 'graded'
+        WHERE id = ?
+    ''', (
+        new_condition,
+        route['routing_decision'],
+        route['routing_reason'],
+        testing_notes,
+        id
+    ))
+    conn.commit()
+    conn.close()
+    return {'status': 'updated', **route}
 
 
 if __name__ == '__main__':

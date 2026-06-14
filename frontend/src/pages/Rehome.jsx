@@ -1,22 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ConditionBadge from '../components/ConditionBadge'
-import LeafRating from '../components/LeafRating'
 import RehomeBadge from '../components/RehomeBadge'
+import { useLocation as useDeliveryLocation } from '../context/LocationContext'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const FILTERS = ['All', 'Like New', 'Good', 'Acceptable']
 
-const LEAF_MAP = { 'Like New': 5, 'Good': 4, 'Acceptable': 3, 'Liquidate': 1 }
-
 function deriveCard(item) {
   const mrp = item.original_mrp || 2000
   const price = item.suggested_resale_price || 0
   const deduction = price > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0
-  const leafRating = LEAF_MAP[item.ai_condition_tier] ?? 0
   const firstImage = item.image_paths?.split(',')[0]?.trim()
-  return { ...item, mrp, price, deduction, leafRating, firstImage }
+  return { ...item, mrp, price, deduction, firstImage }
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -129,11 +126,6 @@ function ProductCard({ item, onAddToCart }) {
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-1.5">
           <RehomeBadge />
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200
-                           px-2 py-0.5 text-xs font-medium text-green-700">
-            <PinIcon />
-            Available Near You
-          </span>
         </div>
 
         {/* Product name */}
@@ -153,11 +145,6 @@ function ProductCard({ item, onAddToCart }) {
           {item.deduction > 0 && (
             <span className="text-xs font-semibold text-green-600">{item.deduction}% OFF</span>
           )}
-        </div>
-
-        {/* Leaf rating */}
-        <div className="scale-90 origin-left">
-          <LeafRating rating={item.leafRating} />
         </div>
 
         {/* Actions */}
@@ -216,6 +203,7 @@ export default function Rehome() {
   const [activeFilter, setActiveFilter] = useState('All')
   const [toastVisible, setToastVisible] = useState(false)
   const toastTimer = useRef(null)
+  const { selectedLocation } = useDeliveryLocation()
 
   const fetchMarketplace = useCallback(async () => {
     try {
@@ -239,12 +227,29 @@ export default function Rehome() {
     toastTimer.current = setTimeout(() => setToastVisible(false), 2500)
   }
 
+  // Location-based filtering: Rehome products are from Warehouse New Delhi DEX3
+  // Only serviceable to Delhi and Gurugram
+  const locationFiltered = selectedLocation.serviceable ? items : []
+
   const filtered = activeFilter === 'All'
-    ? items
-    : items.filter(i => i.ai_condition_tier === activeFilter)
+    ? locationFiltered
+    : locationFiltered.filter(i => i.ai_condition_tier === activeFilter)
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f3f4f6' }}>
+
+      {/* ── Breadcrumb ───────────────────────────────────────────────────── */}
+      <div className="w-full bg-white border-b border-gray-200">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-2">
+          <nav className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Link to="/" className="hover:text-orange-500 hover:underline transition">Amazon.in</Link>
+            <span className="text-gray-300">›</span>
+            <span>Featured</span>
+            <span className="text-gray-300">›</span>
+            <span className="text-gray-600 font-medium">Amazon Rehome</span>
+          </nav>
+        </div>
+      </div>
 
       {/* ── Hero banner ──────────────────────────────────────────────────── */}
       <div style={{ backgroundColor: '#131921' }} className="w-full px-6 py-10 sm:py-14">
@@ -255,11 +260,18 @@ export default function Rehome() {
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#FF9900' }}>
               A featured section on Amazon
             </span>
-            <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight flex items-center gap-3 flex-wrap">
               Amazon Rehome
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold border"
+                style={{ backgroundColor: '#f0fdf4', borderColor: '#16a34a', color: '#15803d' }}
+              >
+                <PinIcon />
+                Available Near You
+              </span>
             </h1>
             <p className="text-gray-400 text-sm sm:text-base max-w-sm leading-relaxed">
-              Verified pre-owned products available near you.
+              Verified pre-owned products — available near you.
               Discounted and AI graded.
             </p>
           </div>
@@ -310,7 +322,19 @@ export default function Rehome() {
             {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState />
+          !selectedLocation.serviceable ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+              <div className="h-16 w-16 rounded-full bg-orange-50 flex items-center justify-center">
+                <PinIcon />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-700">Available soon at your location!</p>ch
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Change your delivery address in the header to see available products.</p>
+            </div>
+          ) : (
+            <EmptyState />
+          )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map(item => (
