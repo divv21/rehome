@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import AmazonHome from './pages/AmazonHome'
 import Rehome from './pages/Rehome'
@@ -100,6 +100,8 @@ export default function App() {
         <Route path="/warehouse" element={<WarehouseSubmit />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/health/:id" element={<WarehouseHealthCard />} />
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

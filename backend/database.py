@@ -33,53 +33,5 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-
-    if conn.execute('SELECT COUNT(*) FROM returns').fetchone()[0] == 0:
-        conn.execute('''
-            INSERT INTO returns (
-                order_id, product_name, return_reason, customer_condition,
-                notes, image_paths, ai_condition_tier, ai_confidence,
-                ai_damage_notes, routing_decision, routing_reason,
-                suggested_resale_price, original_mrp, warranty_status, status
-            ) VALUES (
-                'ORD-0001', 'Sony WH-1000XM4 Headphones', 'No Longer Needed', 'Like New',
-                'Used twice only', 'placeholder.jpg', 'Like New', 96,
-                'No visible damage found. Product is in pristine condition.',
-                'Resell on Amazon Rehome',
-                'Net recovery exceeds liquidation floor. Listed regionally first.',
-                1600, 2000, '10 months remaining', 'listed'
-            )
-        ''')
-        conn.execute('''
-            INSERT INTO returns (
-                order_id, product_name, return_reason, customer_condition,
-                notes, image_paths, ai_condition_tier, ai_confidence,
-                ai_damage_notes, routing_decision, routing_reason,
-                suggested_resale_price, original_mrp, warranty_status, status
-            ) VALUES (
-                'ORD-0002', 'Philips Air Fryer HD9200', 'Defective', 'Fair',
-                'Minor crack on handle', 'placeholder.jpg', 'Acceptable', 82,
-                'Minor crack on handle, functional', 'Refurbish Then Resell',
-                'Post refurbishment recovery viable',
-                900, 1800, '4 months remaining', 'graded'
-            )
-        ''')
-        conn.execute('''
-            INSERT INTO returns (
-                order_id, product_name, return_reason, customer_condition,
-                notes, image_paths, ai_condition_tier, ai_confidence,
-                ai_damage_notes, routing_decision, routing_reason,
-                suggested_resale_price, original_mrp, warranty_status, status
-            ) VALUES (
-                'ORD-0003', 'Wildcraft Backpack 45L', 'Wrong Item', 'Good',
-                'Received wrong colour', 'placeholder.jpg', NULL, NULL,
-                NULL, NULL, NULL,
-                NULL, 1200, '12 months remaining', 'pending_grading'
-            )
-        ''')
-        conn.commit()
-
     conn.close()
-
-
 init_db()

@@ -3,11 +3,10 @@ import { useState } from 'react'
 const RETURN_REASONS = ['Wrong Item', 'Defective', 'No Longer Needed', 'Changed Mind', 'Size/Fit Issue', 'Other']
 
 const ORDERS = [
-  { id: 'ORD-4821', product_name: 'Sony WH-1000XM5 Wireless Headphones', category: 'Electronics', price: 29990, date: 'May 28, 2026', image: 'S', eligible: true },
-  { id: 'ORD-4822', product_name: 'Apple iPhone 14 128GB', category: 'Electronics', price: 79900, date: 'May 15, 2026', image: 'A', eligible: true },
-  { id: 'ORD-4823', product_name: 'Nike Air Max 270 Running Shoes', category: 'Footwear', price: 10795, date: 'June 2, 2026', image: 'N', eligible: true },
-  { id: 'ORD-4824', product_name: 'Philips Air Fryer HD9200', category: 'Kitchen Appliances', price: 6995, date: 'April 20, 2026', image: 'P', eligible: true },
-  { id: 'ORD-4825', product_name: 'Atomic Habits by James Clear', category: 'Books', price: 799, date: 'March 10, 2026', image: 'B', eligible: false },
+  { id: 'ORD-4821', product_name: 'Sony WH-1000XM5 Wireless Headphones', category: 'Electronics', price: 29990, date: 'May 28, 2026', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400', eligible: true },
+  { id: 'ORD-4822', product_name: 'Apple iPhone 14 128GB', category: 'Electronics', price: 79900, date: 'May 15, 2026', image: 'https://images.unsplash.com/photo-1726587912121-ea21fcc57ff8?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', eligible: true },
+  { id: 'ORD-4823', product_name: 'Nike Air Max 270 Running Shoes', category: 'Footwear', price: 10795, date: 'June 2, 2026', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400', eligible: true },
+  { id: 'ORD-4825', product_name: 'Atomic Habits by James Clear', category: 'Books', price: 799, date: 'March 10, 2026', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400', eligible: false },
 ]
 
 function CheckCircle() {
@@ -79,9 +78,13 @@ function ReturnModal({ order, onClose, onSuccess }) {
 
         {/* Product details */}
         <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 flex items-center gap-3 mb-5">
-          <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center text-lg font-black text-gray-400 flex-shrink-0">
-            {order.image}
-          </div>
+          <img
+            src={order.image}
+            alt={order.product_name}
+            className="flex-shrink-0"
+            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e7e7e7' }}
+            onError={(e) => { e.target.style.display='none' }}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">{order.product_name}</p>
             <p className="text-xs text-gray-500">₹{order.price.toLocaleString('en-IN')} · Delivered {order.date}</p>
@@ -171,10 +174,14 @@ export default function CustomerOrders() {
                 key={order.id}
                 className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-5 flex items-center gap-4"
               >
-                {/* Image placeholder */}
-                <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center text-xl font-black text-gray-300 flex-shrink-0">
-                  {order.image}
-                </div>
+                {/* Product image */}
+                <img
+                  src={order.image}
+                  alt={order.product_name}
+                  className="flex-shrink-0"
+                  style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e7e7e7' }}
+                  onError={(e) => { e.target.style.display='none' }}
+                />
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">

@@ -52,10 +52,10 @@ const SLIDES = [
 
 // ── Fake products ─────────────────────────────────────────────────────────────
 const PRODUCTS = [
-  { name: 'OnePlus Nord CE 3 Lite 5G', price: '₹16,999', original: '₹19,999', stars: 4, reviews: '12,847' },
-  { name: 'Samsung Galaxy M34 5G', price: '₹14,999', original: '₹18,999', stars: 4, reviews: '8,234' },
-  { name: 'boAt Airdopes 141', price: '₹999', original: '₹2,990', stars: 4, reviews: '1,45,620' },
-  { name: 'Fire-Boltt Ninja Call Pro', price: '₹1,599', original: '₹5,999', stars: 3, reviews: '34,221' },
+  { name: 'OnePlus Nord CE 3 Lite 5G', price: '₹16,999', original: '₹19,999', stars: 4, reviews: '12,847', image: 'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=400' },
+  { name: 'Samsung Galaxy M34 5G', price: '₹14,999', original: '₹18,999', stars: 4, reviews: '8,234', image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400' },
+  { name: 'boAt Airdopes 141', price: '₹999', original: '₹2,990', stars: 4, reviews: '1,45,620', image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=400' },
+  { name: 'Fire-Boltt Ninja Call Pro', price: '₹1,599', original: '₹5,999', stars: 3, reviews: '34,221', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400' },
 ]
 
 function StarRating({ count }) {
@@ -189,12 +189,12 @@ export default function AmazonHome() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {PRODUCTS.map((p, i) => (
               <div key={i} className="flex flex-col gap-2 cursor-pointer group">
-                {/* Image placeholder */}
-                <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center group-hover:shadow-sm transition">
-                  <span className="text-3xl font-black text-gray-200">
-                    {p.name.split(' ').slice(0, 1).map(w => w[0]).join('')}
-                  </span>
-                </div>
+                {/* Product image */}
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '4px' }}
+                />
                 {/* Info */}
                 <p className="text-xs text-blue-700 hover:text-orange-600 hover:underline line-clamp-2 leading-snug cursor-pointer">
                   {p.name}

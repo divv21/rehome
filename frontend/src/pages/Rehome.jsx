@@ -262,30 +262,14 @@ export default function Rehome() {
             </span>
             <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight flex items-center gap-3 flex-wrap">
               Amazon Rehome
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold border"
-                style={{ backgroundColor: '#f0fdf4', borderColor: '#16a34a', color: '#15803d' }}
-              >
-                <PinIcon />
-                Available Near You
-              </span>
             </h1>
             <p className="text-gray-400 text-sm sm:text-base max-w-sm leading-relaxed">
-              Verified pre-owned products — available near you.
+              Verified pre-owned products, available near you.
               Discounted and AI graded.
             </p>
           </div>
 
-          {/* Right — illustration placeholder */}
-          <div className="hidden sm:flex flex-shrink-0 h-32 w-52 rounded-2xl border border-gray-700
-                          items-center justify-center text-center bg-gray-800">
-            <div className="flex flex-col items-center gap-2 px-4">
-              <svg className="h-8 w-8 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-              </svg>
-              <p className="text-xs text-gray-500 leading-snug">Every return finds a new home</p>
-            </div>
-          </div>
+
 
         </div>
       </div>
@@ -328,7 +312,7 @@ export default function Rehome() {
                 <PinIcon />
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-700">Available soon at your location!</p>ch
+                <p className="text-lg font-bold text-gray-700">Available soon at your location!</p>
               </div>
               <p className="text-xs text-gray-400 mt-2">Change your delivery address in the header to see available products.</p>
             </div>
